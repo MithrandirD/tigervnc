@@ -27,14 +27,12 @@
 #ifndef __RFB_VNCSCONNECTIONST_H__
 #define __RFB_VNCSCONNECTIONST_H__
 
-#include <list>
 #include <set>
 
+#include <rfb/Congestion.h>
 #include <rfb/EncodeManager.h>
 #include <rfb/SConnection.h>
 #include <rfb/Timer.h>
-
-struct RTTInfo;
 
 namespace rfb {
   class VNCServerST;
@@ -190,14 +188,7 @@ namespace rfb {
     unsigned fenceDataLen;
     char *fenceData;
 
-    unsigned baseRTT;
-    unsigned congWindow;
-    unsigned ackedOffset, sentOffset;
-
-    unsigned minRTT;
-    bool seenCongestion;
-    Timer congestionTimer;
-    std::list<struct RTTInfo> pings;
+    Congestion congestion;
 
     VNCServerST* server;
     SimpleUpdateTracker updates;
