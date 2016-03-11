@@ -36,6 +36,14 @@
 #include <assert.h>
 #include <sys/time.h>
 
+#ifdef __linux__
+#include <sys/ioctl.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <linux/sockios.h>
+#endif
+
 #include <rfb/Congestion.h>
 #include <rfb/LogWriter.h>
 #include <rfb/util.h>
@@ -198,8 +206,32 @@ void Congestion::gotPong()
   updateCongestion();
 }
 
-bool Congestion::isCongested()
+bool Congestion::isCongested(int fd)
 {
+#ifdef CONGESTION_DEBUG
+#ifdef __linux__
+  if (fd != 0) {
+    FILE *f;
+    f = fopen("dump.csv", "ab");
+    if (f != NULL) {
+      struct tcp_info info;
+      int buffered;
+      socklen_t len;
+      len = sizeof(info);
+      if ((getsockopt(fd, IPPROTO_TCP, TCP_INFO, &info, &len) == 0) &&
+          (ioctl(fd, SIOCOUTQ, &buffered) == 0)) {
+        struct timeval now;
+        gettimeofday(&now, NULL);
+        fprintf(f, "%u.%06u,%u,%u,%u,%u\n",
+                (unsigned)now.tv_sec, (unsigned)now.tv_usec,
+                congWindow, info.tcpi_snd_cwnd * info.tcpi_snd_mss,
+                getInFlight(), buffered);
+      }
+      fclose(f);
+    }
+  }
+#endif
+#endif
   if (getInFlight() < congWindow)
     return false;
 
