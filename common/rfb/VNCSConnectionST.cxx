@@ -110,6 +110,8 @@ VNCSConnectionST::~VNCSConnectionST()
   server->clients.remove(this);
 
   delete [] fenceData;
+
+  queryConnectTimer.stop();
 }
 
 
