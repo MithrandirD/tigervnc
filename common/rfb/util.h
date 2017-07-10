@@ -40,6 +40,8 @@ struct timeval;
 
 namespace rfb {
 
+  template <typename T> void UNUSED(const T&) {}
+
   // -=- Class to handle cleanup of arrays of characters
   class CharArray {
   public:
