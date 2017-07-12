@@ -211,7 +211,17 @@ public class CSecurityTLS extends CSecurity {
         for (TrustManager m : tmf.getTrustManagers())
           if (m instanceof X509TrustManager)
             for (X509Certificate c : ((X509TrustManager)m).getAcceptedIssuers())
-              ks.setCertificateEntry(getThumbprint((X509Certificate)c), c);
+              ks.setCertificateEntry(c.getSubjectX500Principal().getName(), c);
+        File castore = new File(FileUtils.getVncHomeDir()+"x509_savedcerts.pem");
+        if (castore.exists() && castore.canRead()) {
+          InputStream caStream = new MyFileInputStream(castore);
+          Collection<? extends Certificate> cacerts =
+            cf.generateCertificates(caStream);
+          for (Certificate cert : cacerts) {
+            String thumbprint = getThumbprint((X509Certificate)cert);
+            ks.setCertificateEntry(thumbprint, (X509Certificate)cert);
+          }
+        }
         File cacert = new File(cafile);
         if (cacert.exists() && cacert.canRead()) {
           InputStream caStream = new MyFileInputStream(cacert);
@@ -252,25 +262,13 @@ public class CSecurityTLS extends CSecurity {
     public void checkServerTrusted(X509Certificate[] chain, String authType)
       throws CertificateException
     {
-      Collection<? extends Certificate> certs = null;
-      X509Certificate cert = chain[0];
-      String thumbprint = getThumbprint(cert);
-      File vncDir = new File(FileUtils.getVncHomeDir());
-      File certFile = new File(vncDir, "x509_savedcerts.pem");
-      CertificateFactory cf = CertificateFactory.getInstance("X.509");
-      if (vncDir.exists() && certFile.exists() && certFile.canRead()) {
-        InputStream certStream = new MyFileInputStream(certFile);
-        certs = cf.generateCertificates(certStream);
-        for (Certificate c : certs)
-          if (thumbprint.equals(getThumbprint((X509Certificate)c)))
-            return;
-      }
       try {
-        verifyHostname(cert);
+        verifyHostname(chain[0]);
         tm.checkServerTrusted(chain, authType);
       } catch (java.lang.Exception e) {
         if (e.getCause() instanceof CertPathBuilderException) {
           Object[] answer = {"YES", "NO"};
+          X509Certificate cert = chain[0];
           int ret = JOptionPane.showOptionDialog(null,
             "This certificate has been signed by an unknown authority\n"+
             "\n"+
