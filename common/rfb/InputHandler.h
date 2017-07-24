@@ -32,9 +32,9 @@ namespace rfb {
   class InputHandler {
   public:
     virtual ~InputHandler() {}
-    virtual void keyEvent(rdr::U32 __unused key, bool __unused down) { }
-    virtual void pointerEvent(const Point& __unused pos, int __unused buttonMask) { }
-    virtual void clientCutText(const char* __unused str, int __unused len) { }
+    virtual void keyEvent(rdr::U32 key, bool down) { UNUSED(key); UNUSED(down); }
+    virtual void pointerEvent(const Point& pos, int buttonMask) { UNUSED(pos), UNUSED(buttonMask); }
+    virtual void clientCutText(const char* str, int len) { UNUSED(str); UNUSED(len); }
   };
 
 }
